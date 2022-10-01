@@ -16,12 +16,24 @@
         821913529170526209,
         821280210377179136
     ],
+    "exclude_channels_in_scid":[
+        "747526x1612x1",
+        "746950x151x1"
+    ],
     "exclude_channels_out": [
         821264817346314240,
         818108119373578240
     ],
+    "exclude_channels_out_scid":[
+        "747526x1612x1",
+        "746950x151x1"
+    ],
     "exclude_channels": [
         802741344926629888
+    ],
+    "exclude_channels_scid":[
+        "747526x1612x1",
+        "746950x151x1"
     ],
     "exclude_nodes": [
         "0363749dbdb99321177082935bf7c36978fc46c725c5c452d48d721ab31e7682c2",

@@ -13,6 +13,7 @@ import (
 	"github.com/jessevdk/go-flags"
 	"github.com/lightninglabs/lndclient"
 	"github.com/lightningnetwork/lnd/lnrpc"
+
 	"github.com/lightningnetwork/lnd/lnrpc/routerrpc"
 )
 
@@ -21,30 +22,35 @@ var mainParams struct {
 }
 
 var params struct {
-	Config             string   `short:"f" long:"config" description:"config file path"`
-	Connect            string   `short:"c" long:"connect" description:"connect to lnd using host:port" json:"connect"`
-	TLSCert            string   `short:"t" long:"tlscert" description:"path to tls.cert to connect" required:"false" json:"tlscert"`
-	MacaroonDir        string   `long:"macaroon-dir" description:"path to the macaroon directory" required:"false" json:"macaroon_dir" toml:"macaroon_dir"`
-	MacaroonFilename   string   `long:"macaroon-filename" description:"macaroon filename" json:"macaroon_filename" toml:"macaroon_filename"`
-	Network            string   `short:"n" long:"network" description:"bitcoin network to use" json:"network"`
-	FromPerc           int64    `long:"pfrom" description:"channels with less than this inbound liquidity percentage will be considered as source channels" json:"pfrom" toml:"pfrom"`
-	ToPerc             int64    `long:"pto" description:"channels with less than this outbound liquidity percentage will be considered as target channels" json:"pto" toml:"pto"`
-	Perc               int64    `short:"p" long:"perc" description:"use this value as both pfrom and pto from above" json:"perc"`
-	Amount             int64    `short:"a" long:"amount" description:"amount to rebalance" json:"amount"`
-	EconRatio          float64  `short:"r" long:"econ-ratio" description:"economical ratio for fee limit calculation as a multiple of target channel fee (for example, 0.5 means you want to pay at max half the fee you might earn for routing out of the target channel)" json:"econ_ratio" toml:"econ_ratio"`
-	FeeLimitPPM        int64    `short:"F" long:"fee-limit-ppm" description:"don't consider the target channel fee and use this max fee ppm instead (can rebalance at a loss, be careful)" json:"fee_limit_ppm" toml:"fee_limit_ppm"`
-	LostProfit         bool     `short:"l" long:"lost-profit" description:"also consider the outbound channel fees when looking for profitable routes so that outbound_fee+inbound_fee < route_fee" json:"lost_profit" toml:"lost_profit"`
-	ProbeSteps         int      `short:"b" long:"probe-steps" description:"if the payment fails at the last hop try to probe lower amount using this many steps" json:"probe_steps" toml:"probe_steps"`
-	MinAmount          int64    `long:"min-amount" description:"if probing is enabled this will be the minimum amount to try" json:"min_amount" toml:"min_amount"`
-	ExcludeChannelsIn  []uint64 `short:"i" long:"exclude-channel-in" description:"don't use this channel as incoming (can be specified multiple times)" json:"exclude_channels_in" toml:"exclude_channels_in"`
-	ExcludeChannelsOut []uint64 `short:"o" long:"exclude-channel-out" description:"don't use this channel as outgoing (can be specified multiple times)" json:"exclude_channels_out" toml:"exclude_channels_out"`
-	ExcludeChannels    []uint64 `short:"e" long:"exclude-channel" description:"don't use this channel at all (can be specified multiple times)" json:"exclude_channels" toml:"exclude_channels"`
-	ExcludeNodes       []string `short:"d" long:"exclude-node" description:"don't use this node for routing (can be specified multiple times)" json:"exclude_nodes" toml:"exclude_nodes"`
-	ToChannel          uint64   `long:"to" description:"try only this channel as target (should satisfy other constraints too)" json:"to" toml:"to"`
-	FromChannel        uint64   `long:"from" description:"try only this channel as source (should satisfy other constraints too)" json:"from" toml:"from"`
-	AllowUnbalanceFrom bool     `long:"allow-unbalance-from" description:"let the source channel go below 50% local liquidity, use if you want to drain a channel; you should also set --pfrom to >50" json:"allow_unbalance_from" toml:"allow_unbalance_from"`
-	AllowUnbalanceTo   bool     `long:"allow-unbalance-to" description:"let the target channel go above 50% local liquidity, use if you want to refill a channel; you should also set --pto to >50" json:"allow_unbalance_to" toml:"allow_unbalance_to"`
-	StatFilename       string   `short:"s" long:"stat" description:"save successful rebalance information to the specified CSV file" json:"stat" toml:"stat"`
+	Config                 string   `short:"f" long:"config" description:"config file path"`
+	Connect                string   `short:"c" long:"connect" description:"connect to lnd using host:port" json:"connect"`
+	TLSCert                string   `short:"t" long:"tlscert" description:"path to tls.cert to connect" required:"false" json:"tlscert"`
+	MacaroonDir            string   `long:"macaroon-dir" description:"path to the macaroon directory" required:"false" json:"macaroon_dir" toml:"macaroon_dir"`
+	MacaroonFilename       string   `long:"macaroon-filename" description:"macaroon filename" json:"macaroon_filename" toml:"macaroon_filename"`
+	Network                string   `short:"n" long:"network" description:"bitcoin network to use" json:"network"`
+	FromPerc               int64    `long:"pfrom" description:"channels with less than this inbound liquidity percentage will be considered as source channels" json:"pfrom" toml:"pfrom"`
+	ToPerc                 int64    `long:"pto" description:"channels with less than this outbound liquidity percentage will be considered as target channels" json:"pto" toml:"pto"`
+	Perc                   int64    `short:"p" long:"perc" description:"use this value as both pfrom and pto from above" json:"perc"`
+	Amount                 int64    `short:"a" long:"amount" description:"amount to rebalance" json:"amount"`
+	EconRatio              float64  `short:"r" long:"econ-ratio" description:"economical ratio for fee limit calculation as a multiple of target channel fee (for example, 0.5 means you want to pay at max half the fee you might earn for routing out of the target channel)" json:"econ_ratio" toml:"econ_ratio"`
+	FeeLimitPPM            int64    `short:"F" long:"fee-limit-ppm" description:"don't consider the target channel fee and use this max fee ppm instead (can rebalance at a loss, be careful)" json:"fee_limit_ppm" toml:"fee_limit_ppm"`
+	LostProfit             bool     `short:"l" long:"lost-profit" description:"also consider the outbound channel fees when looking for profitable routes so that outbound_fee+inbound_fee < route_fee" json:"lost_profit" toml:"lost_profit"`
+	ProbeSteps             int      `short:"b" long:"probe-steps" description:"if the payment fails at the last hop try to probe lower amount using this many steps" json:"probe_steps" toml:"probe_steps"`
+	MinAmount              int64    `long:"min-amount" description:"if probing is enabled this will be the minimum amount to try" json:"min_amount" toml:"min_amount"`
+	ExcludeChannelsIn      []uint64 `short:"i" long:"exclude-channel-in" description:"don't use this channel as incoming (can be specified multiple times)" json:"exclude_channels_in" toml:"exclude_channels_in"`
+	ExcludeChannelsInScid  []string `long:"exclude-channel-in-scid" description:"don't use this channel as incoming (can be specified multiple times)" json:"exclude_channels_in_scid" toml:"exclude_channels_in_scid"`
+	ExcludeChannelsOut     []uint64 `short:"o" long:"exclude-channel-out" description:"don't use this channel as outgoing (can be specified multiple times)" json:"exclude_channels_out" toml:"exclude_channels_out"`
+	ExcludeChannelsOutScid []string `long:"exclude-channel-out-scid" description:"don't use this channel as outgoing (can be specified multiple times)" json:"exclude_channels_out_scid" toml:"exclude_channels_out_scid"`
+	ExcludeChannels        []uint64 `short:"e" long:"exclude-channel" description:"don't use this channel at all (can be specified multiple times)" json:"exclude_channels" toml:"exclude_channels"`
+	ExcludeChannelsScid    []string `long:"exclude-channel-scid" description:"don't use this channel at all (can be specified multiple times)" json:"exclude_channels_scid" toml:"exclude_channels_scid"`
+	ExcludeNodes           []string `short:"d" long:"exclude-node" description:"don't use this node for routing (can be specified multiple times)" json:"exclude_nodes" toml:"exclude_nodes"`
+	ToChannel              uint64   `long:"to" description:"try only this channel as target (should satisfy other constraints too)" json:"to" toml:"to"`
+	ToChannelScid          string   `long:"to-scid" description:"try only this channel as target (should satisfy other constraints too)" json:"to_scid" toml:"to_scid"`
+	FromChannel            uint64   `long:"from" description:"try only this channel as source (should satisfy other constraints too)" json:"from" toml:"from"`
+	FromChannelScid        string   `long:"from-scid" description:"try only this channel as source (should satisfy other constraints too)" json:"from_scid" toml:"from_scid"`
+	AllowUnbalanceFrom     bool     `long:"allow-unbalance-from" description:"let the source channel go below 50% local liquidity, use if you want to drain a channel; you should also set --pfrom to >50" json:"allow_unbalance_from" toml:"allow_unbalance_from"`
+	AllowUnbalanceTo       bool     `long:"allow-unbalance-to" description:"let the target channel go above 50% local liquidity, use if you want to refill a channel; you should also set --pto to >50" json:"allow_unbalance_to" toml:"allow_unbalance_to"`
+	StatFilename           string   `short:"s" long:"stat" description:"save successful rebalance information to the specified CSV file" json:"stat" toml:"stat"`
 }
 
 type failedRoute struct {
@@ -223,9 +229,19 @@ func main() {
 	if params.ToChannel > 0 {
 		r.toChannelId = params.ToChannel
 	}
-	r.excludeIn = makeChanSet(params.ExcludeChannelsIn)
-	r.excludeOut = makeChanSet(params.ExcludeChannelsOut)
-	r.excludeBoth = makeChanSet(params.ExcludeChannels)
+
+	if params.ToChannelScid != "" {
+		r.toChannelId = parseScid(params.ToChannelScid)
+
+	}
+	if params.FromChannelScid != "" {
+		r.fromChannelId = parseScid(params.ToChannelScid)
+
+	}
+	r.excludeIn = makeChanSet(params.ExcludeChannelsIn, params.ExcludeChannelsInScid)
+	r.excludeOut = makeChanSet(params.ExcludeChannelsOut, params.ExcludeChannelsOutScid)
+	r.excludeBoth = makeChanSet(params.ExcludeChannels, params.ExcludeChannelsScid)
+
 	err = r.makeNodeList(params.ExcludeNodes)
 	if err != nil {
 		log.Fatal("Error parsing excluded node list: ", err)

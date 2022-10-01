@@ -7,13 +7,51 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/lightningnetwork/lnd/lnrpc"
+	"github.com/lightningnetwork/lnd/lnwire"
 )
 
 func formatChannelPair(a, b uint64) string {
 	return fmt.Sprintf("%d-%d", a, b)
+}
+
+func parseScid(scid string) (chanId uint64) {
+
+	elements := strings.Split(strings.ToLower(scid), "x")
+	if len(elements) == 3 {
+		blockHeight, err := strconv.ParseInt(elements[0], 10, 32)
+		if err != nil {
+			log.Fatalf("error: not able to parse Blockheight of ShortChannelID %s, %s ", scid, err)
+		}
+		txIndex, err := strconv.ParseInt(elements[1], 10, 32)
+		if err != nil {
+			log.Fatalf("error: not able to parse TxIndex of ShortChannelID %s, %s ", scid, err)
+
+		}
+		txPosition, err := strconv.ParseInt(elements[2], 10, 32)
+
+		if err != nil {
+			log.Fatalf("error: not able to parse txPosition of ShortChannelID %s, %s ", scid, err)
+
+		}
+
+		var scid lnwire.ShortChannelID
+		scid.BlockHeight = uint32(blockHeight)
+		scid.TxIndex = uint32(txIndex)
+		scid.TxPosition = uint16(txPosition)
+
+		return scid.ToUint64()
+
+	} else {
+		log.Fatalln("not able to parse ShortChannelID ")
+
+	}
+	return
+
 }
 
 func (r *regolancer) getChannels(ctx context.Context) error {
@@ -27,10 +65,13 @@ func (r *regolancer) getChannels(ctx context.Context) error {
 	return nil
 }
 
-func makeChanSet(chanIds []uint64) (result map[uint64]struct{}) {
+func makeChanSet(chanIds []uint64, shortChanIds []string) (result map[uint64]struct{}) {
 	result = map[uint64]struct{}{}
 	for _, cid := range chanIds {
 		result[cid] = struct{}{}
+	}
+	for _, cid := range shortChanIds {
+		result[parseScid(cid)] = struct{}{}
 	}
 	return
 }
