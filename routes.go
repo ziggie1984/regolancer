@@ -28,21 +28,7 @@ func (r *regolancer) getChanInfo(ctx context.Context, chanId uint64) (*lnrpc.Cha
 	return c, nil
 }
 
-func (r *regolancer) calcFeeLimitMsat(ctx context.Context, to uint64,
-	amtMsat int64, ppm int64) (feeMsat int64, lastPKstr string, err error) {
-	cTo, err := r.getChanInfo(ctx, to)
-	if err != nil {
-		return 0, "", err
-	}
-	lastPKstr = cTo.Node1Pub
-	if lastPKstr == r.myPK {
-		lastPKstr = cTo.Node2Pub
-	}
-	feeMsat = amtMsat * ppm / 1e6
-	return
-}
-
-func (r *regolancer) calcEconFeeMsat(ctx context.Context, from, to uint64, amtMsat int64, ratio float64) (feeMsat int64,
+func (r *regolancer) calcFeeMsat(ctx context.Context, from, to uint64, amtMsat int64, ratio float64, maxFeePPM int64) (feeMsat int64,
 	lastPKstr string, err error) {
 	cTo, err := r.getChanInfo(ctx, to)
 	if err != nil {
@@ -69,26 +55,25 @@ func (r *regolancer) calcEconFeeMsat(ctx context.Context, from, to uint64, amtMs
 	}
 	feeMsat = int64(float64(policyTo.FeeBaseMsat+amtMsat*
 		policyTo.FeeRateMilliMsat)*ratio/1e6) - lostProfitMsat
+
+	feePPM := int64(float64(feeMsat) / float64(amtMsat) * 1e6)
+
 	if feeMsat < 0 {
 		return 0, "", fmt.Errorf("max fee less than zero")
 	}
-	return
-}
 
-func (r *regolancer) calcFeeMsat(ctx context.Context, from, to uint64,
-	amtMsat int64, ratio float64) (feeMsat int64, lastPKstr string, err error) {
-	if params.FeeLimitPPM > 0 {
-		return r.calcFeeLimitMsat(ctx, to, amtMsat, params.FeeLimitPPM)
-	} else {
-		return r.calcEconFeeMsat(ctx, from, to, amtMsat, params.EconRatio)
+	if maxFeePPM != 0 && feePPM > maxFeePPM {
+		return 0, "", fmt.Errorf("fee-ppm higher than allowed max-fee-ppm ")
 	}
+
+	return
 }
 
 func (r *regolancer) getRoutes(ctx context.Context, from, to uint64, amtMsat int64) ([]*lnrpc.Route, int64, error) {
 	routeCtx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 	feeMsat, lastPKstr, err := r.calcFeeMsat(routeCtx, from, to, amtMsat,
-		params.EconRatio)
+		params.EconRatio, params.FeeLimitPPM)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -149,7 +134,7 @@ func (r *regolancer) printRoute(ctx context.Context, route *lnrpc.Route) {
 		return
 	}
 	errs := ""
-	fmt.Printf("%s %s\n", faintWhiteColor("Total fee:"), hiWhiteColor(route.TotalFeesMsat/1000))
+	fmt.Printf("%s %s (%s %s)  \n", faintWhiteColor("Total fee:"), hiWhiteColor(route.TotalFeesMsat/1000), hiWhiteColor(int64(float64(route.TotalFeesMsat)/float64(route.TotalAmtMsat)*1e6)), hiWhiteColor("ppm"))
 	for i, hop := range route.Hops {
 		nodeInfo, err := r.getNodeInfo(ctx, hop.PubKey)
 		if err != nil {
@@ -203,7 +188,7 @@ func (r *regolancer) probeRoute(ctx context.Context, route *lnrpc.Route,
 	}
 	maxFeeMsat, _, err := r.calcFeeMsat(ctx, probedRoute.Hops[0].ChanId,
 		probedRoute.Hops[len(probedRoute.Hops)-1].ChanId, amount*1000,
-		params.EconRatio)
+		params.EconRatio, params.FeeLimitPPM)
 	if err != nil {
 		return 0, err
 	}

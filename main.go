@@ -115,6 +115,8 @@ func tryRebalance(ctx context.Context, r *regolancer, invoice **lnrpc.AddInvoice
 	routeCtx, routeCtxCancel := context.WithTimeout(ctx, time.Second*30)
 	defer routeCtxCancel()
 	routes, fee, err := r.getRoutes(routeCtx, from, to, amt*1000)
+	feePPM := int64(float64(fee) / float64(amt*1000) * 1e6)
+
 	if err != nil {
 		if routeCtx.Err() == context.DeadlineExceeded {
 			log.Print(errColor("Timed out looking for a route"))
@@ -132,8 +134,8 @@ func tryRebalance(ctx context.Context, r *regolancer, invoice **lnrpc.AddInvoice
 		}
 	}
 	for _, route := range routes {
-		log.Printf("Attempt %s, amount: %s (max fee: %s)", hiWhiteColorF("#%d", *attempt),
-			hiWhiteColor(amt), hiWhiteColor(fee/1000))
+		log.Printf("Attempt %s, amount: %s (max fee: %s | %s ppm)", hiWhiteColorF("#%d", *attempt),
+			hiWhiteColor(amt), hiWhiteColor(fee/1000), hiWhiteColor(feePPM))
 		r.printRoute(ctx, route)
 		err = r.pay(ctx, *invoice, amt, params.MinAmount, route, params.ProbeSteps)
 		if err == nil {
