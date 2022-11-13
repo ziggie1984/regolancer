@@ -1,0 +1,19 @@
+version: "3.4"
+
+
+services:
+  regolancer:
+    container_name: regolancer
+    image: regolancer
+    build:
+      context: ../.
+      dockerfile: Dockerfile
+    command: [
+      "--config=/app/.regolancer/${CONFIG_FILENAME}",
+      "--connect=192.168.178.22:10009",
+    ]
+    volumes:
+      - type: bind
+        source: ./config_data
+        target: /app/.regolancer
+ 
