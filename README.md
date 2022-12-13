@@ -195,6 +195,13 @@ payment is then done along this route and it should succeed. If, for whatever
 reason, it doesn't (liquidity shifted somewhere unexpectedly) the cycle
 continues.
 
+# Docker Setup
+
+In general its recommanded to run regolancer in a normal environment because it is
+so easy to install as mentioned above. However if you want to run it in a docker 
+we also provide the Dockerfile and a docker-compose.yml so that you can easily 
+get started. 
+
 # What's wrong with the other rebalancers
 
 While I liked probing in `bos`, it has many downsides: gives up quickly on
