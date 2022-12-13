@@ -9,11 +9,14 @@ services:
       context: ../.
       dockerfile: Dockerfile
     command: [
-      "--config=/app/.regolancer/${CONFIG_FILENAME}",
-      "--connect=192.168.178.22:10009",
+      "--config=/app/.regolancer/config.toml.sample",
+      "--connect=host.docker.internal:10009",
     ]
     volumes:
       - type: bind
         source: ./config_data
         target: /app/.regolancer
+
+    extra_hosts:
+      host.docker.internal:host-gateway
  

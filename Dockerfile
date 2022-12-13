@@ -30,8 +30,6 @@ WORKDIR /app
 COPY --from=builder /go/bin/regolancer /app
 
 
-
-
 VOLUME [ "/root/.lnd" ]
 
 ENTRYPOINT ["./regolancer"]

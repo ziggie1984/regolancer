@@ -202,6 +202,27 @@ so easy to install as mentioned above. However if you want to run it in a docker
 we also provide the Dockerfile and a docker-compose.yml so that you can easily 
 get started. 
 
+Build the container or pull it:
+
+`docker build -t regolancer .` or `docker pull ziggie1984/regolancer
+
+Now you can use regolancer with your lnd instance:
+
+`docker run --rm --add-host=host.docker.internal:host-gateway -it -v /home/lnd:/root/.lnd regolancer --connect host.docker.internal:10009`
+
+The above command assumes /home/lnd is your lnd configuration directory. Please adjust as required.
+
+**Note for Umbrel/Umbrel-OS users**
+
+`docker run --rm --network=umbrel_main_network -it -v /home/umbrel/umbrel/app-data/lightning/data/lnd:/root/.lnd regolancer --connect 10.21.21.9:10009`
+
+Optionally you can create an alias in your shell's environment file like so:
+
+alias regolancer="docker run --rm --network=umbrel_main_network -it -v /home/umbrel/umbrel/app-data/lightning/data/lnd:/root/.lnd regolancer --connect 10.21.21.9:10009"
+
+For older versions of Umbrel please use `/home/umbrel/umbrel/lnd` instead of `/home/umbrel/umbrel/app-data/lightning/data/lnd`
+
+
 # What's wrong with the other rebalancers
 
 While I liked probing in `bos`, it has many downsides: gives up quickly on
