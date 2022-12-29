@@ -70,14 +70,16 @@ func (r *regolancer) pay(ctx context.Context, amount int64, minAmount int64, max
 
 		if result.Failure.Code == lnrpc.Failure_FEE_INSUFFICIENT {
 
+			oldFeeMsat := route.TotalFeesMsat
 			route, err = r.rebuildRoute(ctx, route, amount)
-			if err != nil {
-				if route.TotalFeesMsat <= maxFeeMsat {
+			if err == nil {
+				if route.TotalFeesMsat > oldFeeMsat && route.TotalFeesMsat <= maxFeeMsat {
+					fmt.Printf("failed because of %s trying same route with adopted fee of %s instead of %s", result.Failure.Code.String(),
+						formatFee(route.TotalFeesMsat), formatFee(route.TotalFeesMsat))
 					return r.pay(ctx, amount, minAmount, maxFeeMsat, route, probeSteps)
 				}
 			}
 		}
-
 		if result.Failure.FailureSourceIndex >= uint32(len(route.Hops)) {
 			logErrorF("%s (unexpected hop index %d, should be less than %d)", result.Failure.Code.String(),
 				result.Failure.FailureSourceIndex, len(route.Hops))
