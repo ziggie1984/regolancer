@@ -414,7 +414,5 @@ func main() {
 			}
 			return
 		}
-		log.Printf("Rebalance failed with %s", err)
-
 	}
 }

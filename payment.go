@@ -38,7 +38,7 @@ func (r *regolancer) invalidateInvoice(amount int64) {
 	delete(r.invoiceCache, amount)
 }
 
-func (r *regolancer) pay(ctx context.Context, amount int64, minAmount int64,
+func (r *regolancer) pay(ctx context.Context, amount int64, minAmount int64, maxFeeMsat int64,
 	route *lnrpc.Route, probeSteps int) error {
 	fmt.Println()
 	defer fmt.Println()
@@ -67,6 +67,17 @@ func (r *regolancer) pay(ctx context.Context, amount int64, minAmount int64,
 		return err
 	}
 	if result.Status == lnrpc.HTLCAttempt_FAILED {
+
+		if result.Failure.Code == lnrpc.Failure_FEE_INSUFFICIENT {
+
+			route, err = r.rebuildRoute(ctx, route, amount)
+			if err != nil {
+				if route.TotalFeesMsat <= maxFeeMsat {
+					return r.pay(ctx, amount, minAmount, maxFeeMsat, route, probeSteps)
+				}
+			}
+		}
+
 		if result.Failure.FailureSourceIndex >= uint32(len(route.Hops)) {
 			logErrorF("%s (unexpected hop index %d, should be less than %d)", result.Failure.Code.String(),
 				result.Failure.FailureSourceIndex, len(route.Hops))
