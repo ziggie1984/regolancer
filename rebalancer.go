@@ -75,13 +75,16 @@ func (r *regolancer) tryRebalance(ctx context.Context, attempt *int) (err error,
 			}
 		}
 		*attempt++
+		if err != nil {
+			return err, true
+		}
 	}
 	attemptCancel()
 	if attemptCtx.Err() == context.DeadlineExceeded {
 		log.Print(errColor("Attempt timed out"))
 	}
 
-	return err, true
+	return nil, true
 }
 
 func (r *regolancer) tryRapidRebalance(ctx context.Context, route *lnrpc.Route) (result rebalanceResult, err error) {
