@@ -409,9 +409,12 @@ func main() {
 		}
 		if !retry {
 			if err != nil {
+				log.Println(errColor("Rebalance failed with %s", err))
 				exitCode = 1
 			}
 			return
 		}
+		log.Printf("Rebalance failed with %s", err)
+
 	}
 }

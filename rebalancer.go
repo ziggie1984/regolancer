@@ -81,7 +81,7 @@ func (r *regolancer) tryRebalance(ctx context.Context, attempt *int) (err error,
 		log.Print(errColor("Attempt timed out"))
 	}
 
-	return nil, true
+	return err, true
 }
 
 func (r *regolancer) tryRapidRebalance(ctx context.Context, route *lnrpc.Route) (result rebalanceResult, err error) {
