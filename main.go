@@ -33,6 +33,7 @@ type configParams struct {
 	ToPerc              int64    `long:"pto" description:"channels with less than this outbound liquidity percentage will be considered as target channels" json:"pto" toml:"pto"`
 	Perc                int64    `short:"p" long:"perc" description:"use this value as both pfrom and pto from above" json:"perc" toml:"perc"`
 	Amount              int64    `short:"a" long:"amount" description:"amount to rebalance" json:"amount" toml:"amount"`
+	FuzzAmount          bool     `long:"fuzz-amount" description:"fuzz rebalance amount to increasae privacy" json:"amount" toml:"fuzz_amount"`
 	RelAmountTo         float64  `long:"rel-amount-to" description:"calculate amount as the target channel capacity fraction (for example, 0.2 means you want to achieve at most 20% target channel local balance)"`
 	RelAmountFrom       float64  `long:"rel-amount-from" description:"calculate amount as the source channel capacity fraction (for example, 0.2 means you want to achieve at most 20% source channel remote balance)"`
 	ProbeSteps          int      `short:"b" long:"probe-steps" description:"if the payment fails at the last hop try to probe lower amount using this many steps" json:"probe_steps" toml:"probe_steps"`
@@ -213,10 +214,12 @@ func preflightChecks(params *configParams) error {
 	if params.Amount == 0 && params.RelAmountFrom == 0 && params.RelAmountTo == 0 {
 		return fmt.Errorf("no amount specified, use either --amount, --rel-amount-from, or --rel-amount-to")
 	}
+	if params.Amount == 0 && params.FuzzAmount {
+		return fmt.Errorf("no amount specified to fuzz, use --amount")
+	}
 	if params.FailTolerance == 0 {
 		params.FailTolerance = 1000
 	}
-
 	if (params.RelAmountFrom > 0 || params.RelAmountTo > 0) && params.AllowRapidRebalance {
 		return fmt.Errorf("use either relative amounts or rapid rebalance but not both")
 	}
@@ -311,6 +314,11 @@ func main() {
 		failureCache: map[string]failedRoute{},
 		mcCache:      map[string]int64{},
 		statFilename: params.StatFilename,
+	}
+
+	// We want to make it hard to cluster our rebalances so we fuzz the amount.
+	if params.FuzzAmount {
+		params.Amount = rand.Int63n(params.Amount-params.MinAmount+1) + params.MinAmount
 	}
 	r.lnClient = lnrpc.NewLightningClient(conn)
 	r.routerClient = routerrpc.NewRouterClient(conn)
